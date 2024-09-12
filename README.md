@@ -8,4 +8,3 @@ De bedoeling is om een 5 stack module te gebuiken om de bruikbaarheid te testen.
 
 Nogmaals een test in VSCode
 
-:)
