@@ -1,0 +1,7 @@
+hierin zullen een aantal cheatsheets geplaats worden
+gaat over commands en omgevingen zoals:
+- docker
+- git
+- ros2
+
+waarschijnlijk gaat hier ook een uitleg komen voor git gebruik met regels en workflow 
