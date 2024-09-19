@@ -30,3 +30,6 @@ steps workflow in GIT
 5) git commit -m [message]
 6) git push
 
+Branch protection: 
+Main branch is protected, needs pull request to add the new content to the main.
+See link: https://www.youtube.com/watch?v=AQAi-7CcYPk
