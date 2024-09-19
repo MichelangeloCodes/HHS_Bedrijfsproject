@@ -21,3 +21,12 @@ CODE REVIEW BEST PRACTISE
 - include everyone - including new and senior members of the team - in the process
 - distribute code review request amongst the team
 - ask quastions and provide helpful context
+
+steps workflow in GIT
+1) checkout branch & check branch
+2) check status
+3) git pull --rebase if possible else git pull
+4) git add [file]
+5) git commit -m [message]
+6) git push
+
