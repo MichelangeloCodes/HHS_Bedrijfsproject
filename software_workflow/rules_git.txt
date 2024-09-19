@@ -1,0 +1,23 @@
+
+BEST PRACTISES
+1) Make incremental, small changes
+2) Keep commits atomic
+3) Develop using branches
+4) Write descriptive commit messages
+5) Obtain feedback through code review
+6) Identify a branching strategy
+
+https://about.gitlab.com/topics/version-control/version-control-best-practices/
+
+IDENTIFY A BRANCHING STRATEGY
+- Feature branching: Teams use a new branch for each feature and don't commit directly to the main branch.
+
+CODE REVIEW
+1) Pair programming
+2) Over the shoulder reviews
+
+CODE REVIEW BEST PRACTISE
+- limit code review sessions to keep them productive
+- include everyone - including new and senior members of the team - in the process
+- distribute code review request amongst the team
+- ask quastions and provide helpful context
