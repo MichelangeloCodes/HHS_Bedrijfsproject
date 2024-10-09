@@ -4,7 +4,12 @@ FROM ubuntu:22.04
 # UPDATE UBUNTU PACKAGES
 RUN apt update -y && apt upgrade -y
 
-# INSTALL ROS2 HUMBLE :: https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html
+#######################
+#   START WITH ROS    #
+#######################
+
+# https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html
+
 RUN locale  
 
 RUN apt update && apt install locales -y
@@ -29,7 +34,30 @@ RUN apt install ros-humble-desktop -y
 
 RUN source /opt/ros/humble/setup.bash
 
-# REMOVE GIT
-# ...
+#######################
+# START WITH MICROROS #
+#######################
 
-# MAKE WORK DIRECTORY
+# https://micro.ros.org/docs/tutorials/core/first_application_linux/
+
+# Source the ROS 2 installation
+RUN source /opt/ros/$ROS_DISTRO/setup.bash
+
+# go to correct dir
+RUN cd ~/
+
+# Create a workspace and download the micro-ROS tools
+RUN mkdir microros_ws && \
+    cd microros_ws && \
+    git clone -b $ROS_DISTRO https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
+
+# Update dependencies using rosdep
+RUN apt update && rosdep update
+RUN rosdep install --from-paths src --ignore-src -y
+
+# Install pip
+RUN apt-get install python3-pip
+
+# Build micro-ROS tools and source them
+RUN colcon build
+RUN source install/local_setup.bash
