@@ -4,9 +4,6 @@ FROM ubuntu:22.04
 # UPDATE UBUNTU PACKAGES
 RUN sudo apt update -y && sudo apt upgrade -y
 
-# INSTALL GIT
-# RUN sudo apt install git -y
-
 # INSTALL ROS2 HUMBLE :: https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html
 RUN locale  
 
