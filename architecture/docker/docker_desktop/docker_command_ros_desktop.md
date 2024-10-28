@@ -2,9 +2,12 @@
 
 ## start container in SHELL 1 
 ### to make use of GUI applications
+```bash 
 xhost +local:docker
+```
 
 ### to start the container
+```bash 
 docker run -it --rm \
     --name ROS_DESKTOP \
     --privileged \
@@ -14,7 +17,7 @@ docker run -it --rm \
     -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     HHS/ros2_desktop:latest
-
+```
 
 ## explained
 -it                 :: the container starts interactive mode
@@ -28,5 +31,6 @@ HHS/ros_base:latest :: picks the image to run from with given tag [version]
 
 
 ## start container in SHELL X
+```bash
 docker exec -it <container_name_or_id> /bin/bash
-
+```
