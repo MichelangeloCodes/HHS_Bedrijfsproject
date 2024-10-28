@@ -15,7 +15,7 @@ Follow these steps to set up the Pioneerbot environment.
 ```bash
 mkdir -p ~/Documents/Pioneerbot/src/
 cd ~/Documents/Pioneerbot/src/
-git clone [repository]
+git clone git@github.com:MichelangeloCodes/HHS_Bedrijfsproject.git
 ```
 
 ## Install Docker
@@ -25,10 +25,9 @@ Follow the instructions in the official Docker documentation:
 - [Execute Docker Post-Install Commands](https://docs.docker.com/engine/install/linux-postinstall/)
 
 ## Pull the Desktop Image
-```bash
+
 for now there are two tags: "ros2_desktop" and "ros2_arm"
 replace <tag>
-```
 ```bash
 docker pull michelangelocodes/hhs:<tag>
 ```
@@ -44,7 +43,9 @@ docker run -it --rm \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     HHS/ros2_desktop:latest
 ```
+command above works for desktop, else change last line 
 more information in /Docker/docker_command_ros_desktop.md
+
 
 Greetings
 Team: Pioneerbot
