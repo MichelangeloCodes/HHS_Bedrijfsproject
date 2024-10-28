@@ -5,7 +5,7 @@ Scan devices on the same wifi - should be a standard linux package
 - ip a
 
 should found something like the following:
-inet 192.168.89.204/24 brd 192.168.89.255
+net 192.168.89.204/24 brd 192.168.89.255
 
 
 Then, run nmap scan:

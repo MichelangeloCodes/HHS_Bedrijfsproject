@@ -30,19 +30,32 @@ RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o 
 RUN rosdep init && \
     rosdep update
 
+ENV ROS_DISTRO=humble
+
 # Source ROS 2 in .bashrc
-#RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
+RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 
 #######################
 # Start with micro-ROS #
 #######################
-
-# Create a workspace and download the micro-ROS tools
 RUN mkdir ~/microros_ws && \
     cd ~/microros_ws && \
     git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup && \
     rosdep install --from-paths src --ignore-src -y
     #colcon build
+
+##############################
+# Install Turtlebot packages #
+##############################
+RUN apt install -y  ros-humble-gazebo-* \
+                    ros-humble-cartographer \
+                    ros-humble-cartographer-ros \
+                    ros-humble-navigation2 \
+                    ros-humble-nav2-bringup \
+                    ros-humble-dynamixel-sdk \
+                    ros-humble-turtlebot3-msgs \
+                    ros-humble-turtlebot3 && \
+    echo 'export ROS_DOMAIN_ID=30 #TURTLEBOT3' >> ~/.bashrc
 
 #################################
 # Clean up unnecessary packages #
