@@ -27,7 +27,9 @@ Follow the instructions in the official Docker documentation:
 ## Pull the Desktop Image
 
 for now there are two tags: "ros2_desktop" and "ros2_arm"
-replace <tag>
+[dockerhub images] (https://hub.docker.com/repository/docker/michelangelocodes/hhs/tags)
+
+replace <tag> with needed project version
 ```bash
 docker pull michelangelocodes/hhs:<tag>
 ```
@@ -35,16 +37,16 @@ docker pull michelangelocodes/hhs:<tag>
 ```bash
 docker run -it --rm \
     --name ROS_DESKTOP \
+    --mount type=bind,source="$HOME/Documents/Pioneerbot/",target=/home/workspace \
     --privileged \
-    --mount type=bind,source="$HOME/Documents/HHS_Bedrijfsproject",target=/home/workspace \
     --device /dev/ttyUSB0 \
     --device /dev/ttyUSB1 \
     -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    HHS/ros2_desktop:latest
+    michelangelocodes/hhs:ros2_desktop
 ```
 command above works for desktop, else change last line 
-more information in /Docker/docker_command_ros_desktop.md
+more information in architecture/docker/docker_command_ros_desktop.md
 
 
 Greetings
