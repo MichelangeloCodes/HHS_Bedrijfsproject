@@ -38,3 +38,7 @@ connect to device with ssh:
 if it is the first time, expect a prompt about fingerpinting and accept it.
 Then fill credentials in and you should connect to the deivce.
 
+
+to swtich network connection from cli
+- nmcli dev wifi list
+- nmcli dev wifi connect "<SSID>" password "<password>"

@@ -1,67 +1,61 @@
-
 # Use Ubuntu Jammy as the base image
 FROM ubuntu:22.04
 
-#######################
-# Install ROS2 Humble #
-#######################
+# Set the shell to bash
+SHELL ["/bin/bash", "-c"]
 
 # Set non-interactive environment variable
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Update packages, install locales, and set the locale
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends locales software-properties-common curl && \
-    locale-gen en_US.UTF-8 && \
-    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-
-RUN apt-get install -y git
-
-# Set the LANG environment variable
-ENV LANG=en_US.UTF-8
-
-# Add ROS 2 repository and install ROS 2, rosdep, and git
-RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
-    apt-get update && \
-    apt-get install -y ros-humble-desktop python3-rosdep
-
-# Initialize rosdep
-RUN rosdep init && \
-    rosdep update
-
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 ENV ROS_DISTRO=humble
 
-# Source ROS 2 in .bashrc
-RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-opencv \
+    bash-completion python3-argcomplete net-tools curl wget \
+    software-properties-common git && \
+    pip install --upgrade pip && \
+    pip install argcomplete colcon-common-extensions && \
+    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc && \
+    echo "source /usr/share/bash-completion/bash_completion" >> ~/.bashrc && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+#######################
+# Install ROS2 Humble #
+#######################   
+RUN apt-get update && \
+    apt-get install -y locales && \
+    locale-gen en_US en_US.UTF-8 && \
+    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
+    add-apt-repository universe && \
+    apt-get update && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y ros-humble-desktop python3-rosdep && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+##############################
+# Install TurtleBot packages #
+##############################
+RUN apt-get update && \
+    apt-get install -y ros-humble-turtlebot4-desktop && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+    
+    
 #######################
 # Start with micro-ROS #
 #######################
-RUN mkdir ~/microros_ws && \
-    cd ~/microros_ws && \
-    git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup && \
-    rosdep install --from-paths src --ignore-src -y
-    #colcon build
-
-##############################
-# Install Turtlebot packages #
-##############################
-RUN apt install -y  ros-humble-gazebo-* \
-                    ros-humble-cartographer \
-                    ros-humble-cartographer-ros \
-                    ros-humble-navigation2 \
-                    ros-humble-nav2-bringup \
-                    ros-humble-dynamixel-sdk \
-                    ros-humble-turtlebot3-msgs \
-                    ros-humble-turtlebot3 && \
-    echo 'export ROS_DOMAIN_ID=30 #TURTLEBOT3' >> ~/.bashrc
-
-#################################
-# Clean up unnecessary packages #
-#################################
-
-RUN apt-get remove --purge -y locales software-properties-common curl python3-pip git && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
+RUN apt-get update && \
+    mkdir -p /microros_ws/src && \
+    cd /microros_ws && \
+    git clone -b $ROS_DISTRO https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup && \
+    . /opt/ros/$ROS_DISTRO/setup.bash && \  
+    rosdep init && \  
+    rosdep update && \
+    rosdep install --from-paths src --ignore-src -y && \
+    colcon build && \
+    . install/local_setup.bash
