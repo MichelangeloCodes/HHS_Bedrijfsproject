@@ -11,11 +11,12 @@ xhost +local:docker
 docker run -it --rm \
     --name ROS_DESKTOP \
     --privileged \
-    --mount type=bind,source="$HOME/Documents/pioneerbot/",target=/home/workspace \
     --device /dev/ttyUSB0 \
     --device /dev/ttyUSB1 \
     -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
+    --network host \
+    --mount type=bind,source="$HOME/Documents/pioneerbot/",target=/home/workspace \
     HHS/ros2_desktop:latest
 ```
 
