@@ -1,3 +1,9 @@
+#Volg de volgende stappen op de raspberry pi anders werkt het niet!
+#1. sudo nano /boot/firmware/config.txt
+#2. en enable Uart door enable_uart=1 te maken en save het bestand
+#3. sudo nano /boot/firmware/cmdline.txt
+#4. en haal de volgende lijn weg console=serial0,115200 en save het bestand
+
 import serial
 import time
 
