@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'csv_subscriber = csv_subscriber.csv_subscriber.main' 
+            'csv_subscriber = csv_subscriber.csv_subscriber:main' 
         ],
     },
 )

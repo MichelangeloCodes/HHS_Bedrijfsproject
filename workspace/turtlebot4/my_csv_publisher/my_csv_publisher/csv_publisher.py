@@ -8,7 +8,7 @@ class CSVPublisher(Node):
     def __init__(self):
         super().__init__('csv_publisher')
         self.publisher_ = self.create_publisher(String, 'csv_data', 10)
-        self.timer = self.create_timer(2.0, self.publish_csv_data)  
+        self.timer = self.create_timer(1.0, self.publish_csv_data)
         self.csv_file = os.path.join(os.path.dirname(__file__), '/home/workspace/meassurements/data_csv/people.csv') # path in current docker container
         self.csv_data = self.load_csv_data()
         self.row_index = 0
