@@ -9,7 +9,7 @@ import time
 from datetime import datetime  # Voor het verkrijgen van de huidige tijd
 
 # Instellen van de UART-poort (vervang '/dev/serial0' indien nodig)
-uart = serial.Serial('/dev/serial0', baudrate=9600, timeout=1)
+uart = serial.Serial('/dev/serial0', baudrate=115200, timeout=1)
 
 def get_valid_response(ping_id):
     """
@@ -17,7 +17,7 @@ def get_valid_response(ping_id):
     """
     try:
         # Wacht op een antwoord
-        time.sleep(1)  # Geef tijd aan de M5Stack om te reageren
+        time.sleep(0.2)  # Geef tijd aan de M5Stack om te reageren
         if uart.in_waiting > 0:
             response = uart.readline().decode('utf-8').strip()
             print(f"Received: {response}")
@@ -70,7 +70,7 @@ while True:
                 break  # Stop als er een geldige respons is ontvangen
             
             print("Retrying with the same ID...")
-            time.sleep(2)  # Wacht voordat opnieuw verzenden
+            time.sleep(0.2)  # Wacht voordat opnieuw verzenden
 
     except Exception as e:
         print(f"Error: {e}")

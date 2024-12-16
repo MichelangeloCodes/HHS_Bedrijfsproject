@@ -16,7 +16,7 @@ co2l_0 = None
 def setup():
     global i2c0, pahub_0, dlight_0, co2l_0, uart2
     M5.begin()
-    uart2 = UART(2, baudrate=9600, tx=17, rx=18)
+    uart2 = UART(2, baudrate=115200, tx=17, rx=18)
     i2c0 = I2C(0, scl=Pin(1), sda=Pin(2), freq=100000)
     co2l_0 = CO2LUnit(PAHUBUnit(i2c=i2c0, channel=0))
     dlight_0 = DLightUnit(PAHUBUnit(i2c=i2c0, channel=1))
@@ -56,7 +56,7 @@ def uart():
                 print(f"Sent: {response}")
         except Exception as e:
             print(f"Error: {e}")
-    time.sleep(1)
+    time.sleep(0.2)
 
 if __name__ == '__main__':
     try:
