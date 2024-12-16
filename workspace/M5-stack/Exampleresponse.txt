@@ -1,4 +1,4 @@
 Sent: ping,1
 Received: 1,18.84,73.04, 3939, 37.5
-Response - ID: 1, Temperature: 18.84, Humidity: 73.04, co2: 3939.0, Light: 37.5
+Response - ID: 1, Temperature: 18.84, Humidity: 73.04, co2: 3939.0, Light: 37.5, Tijd van ontvangst: 2024-12-16, 16:32:43
 Valid response received!
