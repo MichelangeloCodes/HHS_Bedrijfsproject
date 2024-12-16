@@ -6,6 +6,7 @@
 
 import serial
 import time
+from datetime import datetime  # Voor het verkrijgen van de huidige tijd
 
 # Instellen van de UART-poort (vervang '/dev/serial0' indien nodig)
 uart = serial.Serial('/dev/serial0', baudrate=9600, timeout=1)
@@ -30,7 +31,13 @@ def get_valid_response(ping_id):
                 co2 = float(parts[3])
                 light = float(parts[4])
                 
-                print(f"Response - ID: {received_id}, Temperature: {temperature}, Humidity: {humidity}, co2: {co2}, Light: {light}")
+                # Verkrijg huidige tijd
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                # Voeg de tijd toe aan de respons
+                csv_line = f"{received_id},{temperature},{humidity},{co2},{light},{current_time}"
+
+                print(f"Response - ID: {received_id}, Temperature: {temperature}, Humidity: {humidity}, co2: {co2}, Light: {light}, Tijd van ontvangst: {current_time}")
                 
                 # Controleer of de ontvangen ID overeenkomt
                 if str(received_id) == ping_id:
