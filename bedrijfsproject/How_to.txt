@@ -1,0 +1,51 @@
+Python send and recieve
+1       -       Zorg ervoor dat de packages in de setup.py staan
+                colcon build
+                terwijl je met cd in de bedrijfsproject map zit
+
+2       -       Zorg ervoor dat ROS2 de packages weten.
+                Dit moet voor elke terminal opnieuw
+                met source install/setup.bash
+
+3       -       ros2 run my_ros2_package sender_csv
+                ros2 run my_ros2_package listener_csv
+                ros2 run my_ros2_package location_server
+                ros2 run my_ros2_package location_pi
+
+pi
+            data_sender
+
+            export ROS_IP=192.168. .
+            ros2 run my_python_pkg data_sender
+
+
+
+
+Msgs
+                De custum msg gaat als my_interfaces/FloatData
+                ros2 interface show  my_interfaces/msg/Custom
+                ros2 interface list
+
+                
+
+
+Postgress 
+sudo -i -u postgres
+
+    Once you are logged in as the "postgres" user, you can access the PostgreSQL shell by running the following command:
+
+     ```
+     psql
+
+
+     data base name = ties password = ties
+     dbname = bedrijfsprojectdb
+     info = \conninfo
+     jonodono2003@gmail.com
+     Tennis28
+
+
+ssh
+ssh Sillygoose@192.168.178.13
+Password : password
+

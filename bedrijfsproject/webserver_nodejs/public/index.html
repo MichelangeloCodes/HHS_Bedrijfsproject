@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Data</title>
+    <script>
+        const socket = new WebSocket("ws://localhost:8080");
+
+        socket.onopen = function () {
+            console.log("WebSocket connected.");
+        };
+
+        socket.onmessage = function (event) {
+            try {
+                // Parse the received data
+                const data = JSON.parse(event.data);
+                console.log("Received:", data);  // Add this to check if data is received
+
+                // Update the webpage with the received data
+                document.getElementById('value').innerText = `Value: ${data.value}`;
+                document.getElementById('description').innerText = `Description: ${data.description}`;
+            } catch (error) {
+                console.error("Error parsing WebSocket data:", error);
+            }
+        };
+
+        socket.onerror = function (error) {
+            console.error("WebSocket error:", error);
+        };
+    </script>
+</head>
+<body>
+    <h1>Real-Time Data Viewer</h1>
+    <p id="value">Waiting for value...</p>
+    <p id="description">Waiting for description...</p>
+</body>
+</html>
+
+
+
+

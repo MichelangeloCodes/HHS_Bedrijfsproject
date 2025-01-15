@@ -1,0 +1,41 @@
+CREATE TABLE points (
+    point_id SERIAL PRIMARY KEY,
+    room_id INTEGER NOT NULL,
+    room_name VARCHAR(50),
+    mesure_point INTEGER NOT NULL,
+    longitude DECIMAL(9,6) NOT NULL,
+    latitude DECIMAL(9,6) NOT NULL
+);
+
+CREATE TABLE datapoints (
+    point_id SERIAL PRIMARY KEY,
+    point_id INTEGER REFERENCES points(point_id) ON DELETE CASCADE,
+    timestamp TIMESTAMP NOT NULL,
+    sensor1 FLOAT NOT NULL,
+    sensor2 FLOAT NOT NULL,
+    sensor3 FLOAT NOT NULL,
+    sensor4 FLOAT NOT NULL
+);
+
+INSERT INTO rooms (room_id, room_name, longitude, latitude)
+VALUES ('1', 'Eerste kamer', '96.1272', '45.001'), ('2', 'Tweede kamer', '123.123', '45.234');
+
+CREATE TABLE time_slots (
+    slot_id SERIAL PRIMARY KEY,
+    time_slot TIME NOT NULL,
+    point_id INTEGER NOT NULL,
+    FOREIGN KEY (point_id) REFERENCES points (point_id) ON DELETE CASCADE
+);
+
+WITH time_intervals AS (
+    SELECT generate_series(
+        TIMESTAMP '2023-01-01 00:00:00',  -- Start time (use any fixed date)
+        TIMESTAMP '2023-01-01 23:45:00',  -- End time (same fixed date)
+        INTERVAL '15 minutes'            -- Interval
+    )::TIME AS time_slot                 -- Cast back to TIME
+)
+INSERT INTO time_slots (time_slot, room_id)
+SELECT time_slot, 1  -- Replace 1 with the desired room_id
+FROM time_intervals;
+
+

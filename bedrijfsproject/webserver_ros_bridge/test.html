@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROS 2 Listener</title>
+    <style>
+        body {
+            background-color: #868686;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .position-display {
+            width: 200px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Listening to ROS 2 Topic</h1>
+    <div id="output">Waiting for messages...</div>
+
+    <div class="dashboard">
+        <div class="position-display">
+            <h3>Position</h3>
+            <p>Description: <span id="descriptionValue">None</span></p>
+            <p>Data: <span id="dataValue">None</span></p>
+        </div>
+    </div>
+
+    <!-- Include roslibjs from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
+
+    <script>
+        // Connect to rosbridge server
+        const ros = new ROSLIB.Ros({
+            url: 'ws://localhost:9090' // Replace with your rosbridge server address
+        });
+
+        // Connection feedback
+        ros.on('connection', () => {
+            console.log('Connected to rosbridge server.');
+            document.getElementById('output').textContent = "Connected to ROS 2!";
+        });
+
+        ros.on('error', (error) => {
+            console.error('Error connecting to rosbridge:', error);
+            document.getElementById('output').textContent = "Error connecting to ROS 2.";
+        });
+
+        ros.on('close', () => {
+            console.log('Connection to rosbridge closed.');
+            document.getElementById('output').textContent = "Connection closed.";
+        });
+
+        function setupTopics() {
+            // Set up subscription to float_data_topic
+            const float_data_topic = new ROSLIB.Topic({
+                ros: ros,
+                name: '/float_data_topic', // Ensure this matches your topic name
+                messageType: '/interfaces/msg/FloatData' // Ensure this matches your message type
+            });
+
+            // Subscribe to the topic
+            float_data_topic.subscribe(function (message) {
+                console.log('Received message:', message); // Log the entire message for debugging
+
+                // Safely update UI elements
+                if (message.data !== undefined) {
+                    document.getElementById('dataValue').textContent = message.data.toFixed(2);
+                } else {
+                    console.warn('Message missing "data" field.');
+                }
+
+                if (message.description !== undefined) {
+                    document.getElementById('descriptionValue').textContent = message.description.toFixed(2);
+                } else {
+                    console.warn('Message missing "description" field.');
+                }
+            });
+        }
+
+        // Set up topics after connecting
+        ros.on('connection', setupTopics);
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,17 @@
+{
+    "terminal.integrated.env.linux": {
+        "ROS_DISTRO": "humble",
+        "AMENT_PREFIX_PATH": "/opt/ros/humble:/home/<user>/ros2_ws/install"
+    },
+    "ros.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/ties/studie/bedrijfsproject/install/my_ros2_package/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/ties/studie/bedrijfsproject/install/my_ros2_package/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}

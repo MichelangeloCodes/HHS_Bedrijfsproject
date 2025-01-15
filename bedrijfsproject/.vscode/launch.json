@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: ROS 2 Node",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/path/to/your_node.py",
+            "args": [],
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "AMENT_PREFIX_PATH": "${workspaceFolder}/install"
+            }
+        }
+    ]
+}

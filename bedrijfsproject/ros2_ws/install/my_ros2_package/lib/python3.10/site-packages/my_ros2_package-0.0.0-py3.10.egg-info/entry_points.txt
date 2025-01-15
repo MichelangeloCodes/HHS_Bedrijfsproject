@@ -1,0 +1,6 @@
+[console_scripts]
+listener_csv = my_ros2_package.csv_listener:main
+location_pi = my_ros2_package.next_location_pi:main
+location_server = my_ros2_package.next_location_server:main
+sender_csv = my_ros2_package.csv_sender:main
+
