@@ -150,40 +150,6 @@ class PoseFollower(Node):
 
         except FileNotFoundError:
             self.get_logger().error("CSV file not found!")
-
-    def create_csv(self, filename, ping_id):
-        """Create a CSV file with dummy sensor data."""
-
-        try:
-            while True:
-                # Maak een ping-bericht in CSV-formaat
-                ping_message = f"ping,{ping_id}"
-                uart.write((ping_message + '\n').encode('utf-8'))
-                print(f"Sent: {ping_message}")
-
-                pass_value, csv_line = get_valid_response(ping_id)
-                # Controleer of de respons geldig is
-                if pass_value:
-                    data = csv_line
-                    break  # Stop als er een geldige respons is ontvangen
-
-                print("Retrying with the same ID...")
-                time.sleep(0.2)  # Wacht voordat opnieuw verzenden
-
-        except Exception as e:
-            print(f"Error: {e}")
-
-        # data = get_valid_response(ping_id)
-        self.get_logger().info(f"Sensor data is'{data}'")
-
-        with open(filename, mode="w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerows(data)
-
-        self.get_logger().info(f"CSV file '{filename}' created with data: {data}")
-
-        self.send_csv(file)
-
     #####
 
     def create_pose(self, x, y, w):
@@ -245,7 +211,38 @@ class PoseFollower(Node):
                         self.get_logger().info("Acknowledgment received, continuing to next pose...")
 
                         # Run it here!!!
-                        
+                        def create_csv(self, filename, ping_id):
+                            """Create a CSV file with dummy sensor data."""
+
+                            try:
+                                while True:
+                                    # Maak een ping-bericht in CSV-formaat
+                                    ping_message = f"ping,{ping_id}"
+                                    uart.write((ping_message + '\n').encode('utf-8'))
+                                    print(f"Sent: {ping_message}")
+
+                                    pass_value, csv_line = get_valid_response(ping_id)
+                                    # Controleer of de respons geldig is
+                                    if pass_value:
+                                        data = csv_line
+                                        break  # Stop als er een geldige respons is ontvangen
+
+                                    print("Retrying with the same ID...")
+                                    time.sleep(0.2)  # Wacht voordat opnieuw verzenden
+
+                            except Exception as e:
+                                print(f"Error: {e}")
+
+                            # data = get_valid_response(ping_id)
+                            self.get_logger().info(f"Sensor data is'{data}'")
+
+                            with open(filename, mode="w", newline="") as file:
+                                writer = csv.writer(file)
+                                writer.writerows(data)
+
+                            self.get_logger().info(f"CSV file '{filename}' created with data: {data}")
+
+                            self.send_csv(file)
 
 
                         # move to the next pose
