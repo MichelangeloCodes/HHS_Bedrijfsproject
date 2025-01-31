@@ -9,13 +9,14 @@ from std_srvs.srv import Empty  # For docking service
 from irobot_create_msgs.action import Dock, Undock  # Import the Dock and Undock actions
 
 from .usb_arduino_connection import setup_serial, send_data, receive_ack
+import subprocess
 
 
 class PoseFollower(Node):
     def __init__(self):
         super().__init__('pose_follower')
 
-        # setup connection to arudino - from usb_arduino_connection
+        # setup connection to arduino - from usb_arduino_connection
         self.ser = setup_serial()    
 
         # Create an action client to send navigation goals
@@ -103,35 +104,44 @@ class PoseFollower(Node):
                 f"[INFO] [Time: {elapsed_time:.1f} s - Target location: {self.current_target_index + 1} - "
                 f"Pose X: {self.current_pose.position.x:.2f}, Y: {self.current_pose.position.y:.2f}]"
             )
-            if self.is_pose_reached(self.target_poses[self.current_target_index], self.current_pose) or elapsed_time > 300:  # 300-second timeout
+
+            # Check if the pose is reached or if the timeout has occurred
+            if self.is_pose_reached(self.target_poses[self.current_target_index], self.current_pose) or elapsed_time > 30:  # 30-second timeout
                 self.get_logger().info(f"Pose {self.current_target_index + 1} reached or timed out after {elapsed_time} seconds.")
-                
-                #   DELTA MEEGEVEN AAN PLATFORM
-                X_coor = 2.01
-                Y_coor = -5.92
-                W_orien = 1.00
-                send_data(self, self.ser, X_coor, Y_coor, W_orien)
 
-                if receive_ack(self, self.ser):
-                    # Wait for acknowledgment before proceeding
+                if self.current_target_index < len(self.target_poses) - 1:
+                    # Send data if not at last pose
+                    X_coor  = 0.01
+                    Y_coor  = -0.08
+                    W_orien = 0.50
+                    send_data(self.ser, X_coor, Y_coor, W_orien)
+
                     if receive_ack(self.ser):
-                        self.get_logger().info("Acknowledgment received, continuing...")
+                        # Valid acknowledgment received, 
+                        self.get_logger().info("Acknowledgment received, continuing to next pose...")
 
-                        #   HIER AANGEVEN DAT WE KUNNEN METEN
-                        #   WACHTEN TOT CONDITIE VAN METEN
+                        # Run the raspberry_main node using subprocess
+                        try:
+                            self.get_logger().info("Launching raspberry_main node...")
+                            subprocess.Popen(["ros2", "run", "my_python_pkg", "raspberry_main"])
+                            self.get_logger().info("raspberry_main node launched successfully.")
+                        except Exception as e:
+                            self.get_logger().error(f"Failed to launch raspberry_main node: {e}")
 
-                        #   ROBOT RIJDEN NAAR LOCATIE
+                        # move to the next pose
+                        self.get_logger().info("Acknowledgment received, continuing to next pose...")
                         self.current_target_index += 1
-                        if self.current_target_index < len(self.target_poses):
-                            self.move_to_pose(self.target_poses[self.current_target_index])
-                        else:
-                            self.get_logger().info("Final pose reached. Initiating docking procedure...")
-                            self.dock_robot()  # Call docking procedure
-                
+                        self.move_to_pose(self.target_poses[self.current_target_index])
                     else:
                         self.get_logger().info("No valid acknowledgment, retrying...")
-                
 
+                else:
+                    # At last pose, proceed to docking without sending data
+                    self.get_logger().info("Final pose reached. Initiating docking procedure...")
+                    self.dock_robot()  # Call docking procedure
+
+            else:
+                self.get_logger().info("Pose not reached yet, continuing to track...")
         else:
             self.get_logger().info("Waiting for current pose to be received...")
 
@@ -150,7 +160,7 @@ class PoseFollower(Node):
 
     def dock_robot(self):
         """Send a request to the docking service."""
-        self.get_logger().info("Docking the robot...")
+        self.get_logger().info("Docking the robot...")  
         goal_msg = Dock.Goal()  # Send the Dock action goal
         future = self.dock_action_client.send_goal_async(goal_msg)
         future.add_done_callback(self.dock_response_callback)
@@ -177,4 +187,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
