@@ -33,6 +33,8 @@ class PoseFollower(Node):
         # Publisher voor toestemmingssignaal naar `/toestemming_meten`
         self.toestemming_publisher = self.create_publisher(String, '/toestemming_meten', 10)
 
+        # .
+        
         # Doelen instellen
         self.target_poses = [
             self.create_pose(-4.0, -1.0, 1.0),
