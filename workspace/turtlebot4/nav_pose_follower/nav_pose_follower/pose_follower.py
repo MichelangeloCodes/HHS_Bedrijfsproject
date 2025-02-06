@@ -46,11 +46,22 @@ class PoseFollower(Node):
         self.current_pose = None
         self.start_time = time.time()
 
+        # Variabele voor toestemmingsstatus (start als None)
+        self.toestemming_status = None
+
         # Abonnement op /amcl_pose
         self.create_subscription(
             PoseWithCovarianceStamped,
             '/amcl_pose',
             self.pose_callback,
+            10
+        )
+
+        # Abonnement voor het ontvangen van toestemming
+        self.create_subscription(
+            String,
+            '/toestemming_meten',
+            self.toestemming_callback,
             10
         )
 
@@ -157,7 +168,6 @@ class PoseFollower(Node):
         """Callback voor toestemming_meten topic."""
         self.toestemming_status = msg.data
         self.get_logger().info(f"Toestemming status ontvangen: {self.toestemming_status}")
-
 
 
 def main(args=None):
