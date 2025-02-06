@@ -83,11 +83,9 @@ class CsvSender(Node):
             self.get_logger().info("Toestemming ontvangen! Metingen worden gestart.")
             self.toestemming_ontvangen = True
 
-            # Als er een ping ID stond te wachten, begin meteen met meten
-            if self.wachtende_ping_id is not None:
-                self.get_logger().info("CHECK.")
-                self.create_csv("example.csv", self.wachtende_ping_id)
-                self.wachtende_ping_id = None  # Reset wachtende ID
+            self.get_logger().info("CHECK.")
+            self.create_csv("example.csv", self.wachtende_ping_id)
+            self.wachtende_ping_id = None  # Reset wachtende ID
 
     def csv_callback(self, msg):
         """Callback om het ontvangen nummer te verwerken."""
