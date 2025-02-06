@@ -109,9 +109,11 @@ class PoseFollower(Node):
                         # Stuur toestemming naar /toestemming_meten
                         self.send_toestemming_meten()
 
-                        self.get_logger().info("Acknowledgment received, continuing to next pose...")
-                        self.current_target_index += 1
-                        self.move_to_pose(self.target_poses[self.current_target_index])
+                        # Wacht totdat toestemming "0" is ontvangen voordat verder gaat
+                        if self.toestemming_status == "0":
+                            self.get_logger().info("Acknowledgment received, continuing to next pose...")
+                            self.current_target_index += 1
+                            self.move_to_pose(self.target_poses[self.current_target_index])
                     else:
                         self.get_logger().info("No valid acknowledgment, retrying...")
                 else:
@@ -150,6 +152,12 @@ class PoseFollower(Node):
             self.get_logger().info("Docking request completed successfully.")
         except Exception as e:
             self.get_logger().error(f"Failed to dock the robot: {str(e)}")
+
+    def toestemming_callback(self, msg):
+        """Callback voor toestemming_meten topic."""
+        self.toestemming_status = msg.data
+        self.get_logger().info(f"Toestemming status ontvangen: {self.toestemming_status}")
+
 
 
 def main(args=None):
