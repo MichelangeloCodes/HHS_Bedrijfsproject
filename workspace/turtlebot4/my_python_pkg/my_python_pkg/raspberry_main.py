@@ -85,6 +85,7 @@ class CsvSender(Node):
 
             # Als er een ping ID stond te wachten, begin meteen met meten
             if self.wachtende_ping_id is not None:
+                self.get_logger().info("CHECK.")
                 self.create_csv("example.csv", self.wachtende_ping_id)
                 self.wachtende_ping_id = None  # Reset wachtende ID
 
