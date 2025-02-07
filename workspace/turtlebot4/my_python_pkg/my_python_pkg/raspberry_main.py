@@ -82,9 +82,9 @@ class CsvSender(Node):
             self.toestemming_ontvangen = True
 
             if self.wachtende_ping_id is not None:
-                self.send_toestemming_terug()
                 self.create_csv("example.csv", self.wachtende_ping_id)
                 self.wachtende_ping_id = None  # Reset wachtende ID
+                self.send_toestemming_terug()
         elif msg.data == "0":
             self.get_logger().info("Toestemming ingetrokken, stoppen met metingen.")
             self.toestemming_ontvangen = False
@@ -111,7 +111,6 @@ class CsvSender(Node):
         except FileNotFoundError:
             self.get_logger().error(f"CSV file '{filename}' not found!")
 
-        #self.send_toestemming_terug()
 
     def send_toestemming_terug(self):
         """Stuurt een 0 naar /toestemming_meten om toestemming in te trekken."""
