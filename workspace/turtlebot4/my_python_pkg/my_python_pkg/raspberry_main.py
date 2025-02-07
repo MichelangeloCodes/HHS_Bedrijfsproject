@@ -84,7 +84,7 @@ class CsvSender(Node):
             if self.wachtende_ping_id is not None:
                 self.create_csv("example.csv", self.wachtende_ping_id)
                 self.wachtende_ping_id = None  # Reset wachtende ID
-                self.send_toestemming_terug()
+                #self.send_toestemming_terug()
         elif msg.data == "0":
             self.get_logger().info("Toestemming ingetrokken, stoppen met metingen.")
             self.toestemming_ontvangen = False
@@ -155,6 +155,10 @@ class CsvSender(Node):
         self.get_logger().info(f"CSV file '{filename}' created with data: {data}")
 
         self.send_csv(filename)
+
+        # **Zet de toestemming terug naar 0 en publiceer dit**
+        self.toestemming_ontvangen = False
+        self.send_toestemming_terug()
 
 def main(args=None):
     rclpy.init(args=args)

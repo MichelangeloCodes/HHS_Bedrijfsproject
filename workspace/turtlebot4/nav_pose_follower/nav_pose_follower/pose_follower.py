@@ -136,9 +136,9 @@ class PoseFollower(Node):
             self.get_logger().info("Waiting for current pose to be received...")
 
     def is_pose_reached(self, target_pose, current_pose):
-        margin_x = 0.15
-        margin_y = 0.15
-        margin_w = 0.25
+        margin_x = 0.25
+        margin_y = 0.25
+        margin_w = 0.20
 
         return (
             abs(current_pose.position.x - target_pose.pose.position.x)       <= margin_x and
