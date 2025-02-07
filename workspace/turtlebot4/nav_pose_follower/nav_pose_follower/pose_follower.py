@@ -33,8 +33,11 @@ class PoseFollower(Node):
         # Publisher voor toestemmingssignaal naar `/toestemming_meten`
         self.toestemming_publisher = self.create_publisher(String, '/toestemming_meten', 10)
 
-        # .
-        
+        # Variabelen voor tracking van snelheid en vorige positie
+        self.last_pose = None
+        self.still_time = 0  # Tijd in seconden dat de robot stil heeft gestaan
+        self.still_threshold = 2.0  # Drempel in seconden om stilstand te detecteren
+
         # Doelen instellen
         self.target_poses = [
             self.create_pose(-4.0, -1.0, 1.0),
@@ -50,6 +53,7 @@ class PoseFollower(Node):
 
         # Variabele voor toestemmingsstatus (start als None)
         self.toestemming_status = None
+        self.sent_permission = False  # Toegevoegd om toestemming één keer per locatie te sturen
 
         # Abonnement op /amcl_pose
         self.create_subscription(
@@ -103,14 +107,42 @@ class PoseFollower(Node):
         current_time = time.time()
         elapsed_time = round(current_time - self.start_time, 2)
 
+        is_standing_still = False  # Boolean voor stilstandstatus
+
         if self.current_pose is not None:
             self.get_logger().info(
                 f"[INFO] [Time: {elapsed_time:.1f} s - Target {self.current_target_index + 1} - "
                 f"Pose X: {self.current_pose.position.x:.2f}, Y: {self.current_pose.position.y:.2f}]"
             )
 
-            if self.is_pose_reached(self.target_poses[self.current_target_index], self.current_pose) or elapsed_time > 90:
-                self.get_logger().info(f"Pose {self.current_target_index + 1} reached or timed out.")
+            # Controleer of de robot stilstaat
+            if self.last_pose:
+                dx = self.current_pose.position.x - self.last_pose.position.x
+                dy = self.current_pose.position.y - self.last_pose.position.y
+                dz = self.current_pose.position.z - self.last_pose.position.z
+
+                # Bereken de snelheid (afwijking van de positie)
+                speed = (dx**2 + dy**2 + dz**2)**0.5
+
+                # Als de snelheid lager is dan een drempel, beschouwen we de robot als stilstaand
+                if speed < 0.05:  # Drempelwaarde voor snelheid (in meters)
+                    self.still_time += 1  # Verhoog de stilstandtijd
+                else:
+                    self.still_time = 0  # Reset de stilstandtijd als er beweging is
+
+                if self.still_time >= self.still_threshold:  # Als robot stil staat voor drempel tijd
+                    self.get_logger().info("Robot is standing still for more than threshold time.")
+                    is_standing_still = True  # Stel de boolean in dat de robot stilstaat
+                else:
+                    is_standing_still = False
+            
+            # Update de vorige pose voor de volgende tracking
+            self.last_pose = self.current_pose
+
+            # Conditie wanneer pose bereikt is of wanneer we 90 seconden gepasseerd zijn en de robot stil staat
+            if ((self.is_pose_reached(self.target_poses[self.current_target_index], self.current_pose) or 
+                    elapsed_time > 90) and is_standing_still):
+                self.get_logger().info(f"Pose {self.current_target_index + 1} reached or timed out or robot is still.")
 
                 if self.current_target_index < len(self.target_poses) - 1:
                     X_coor  = 0.0
@@ -119,14 +151,21 @@ class PoseFollower(Node):
                     send_data(self.ser, X_coor, Y_coor, W_orien)
 
                     if receive_ack(self.ser):
-                        # Stuur toestemming naar /toestemming_meten
-                        self.send_toestemming_meten()
+                        # Stuur toestemming naar /toestemming_meten als deze nog niet is verzonden
+                        if not self.sent_permission:
+                            self.send_toestemming_meten()
+                            self.sent_permission = True  # Markeer dat toestemming is verzonden
 
                         # Wacht totdat toestemming "0" is ontvangen voordat verder gaat
                         if self.toestemming_status == "0":
+                            if elapsed_time > 90:
+                                time.sleep(2)
+
                             self.get_logger().info("Acknowledgment received, continuing to next pose...")
                             self.current_target_index += 1
                             self.move_to_pose(self.target_poses[self.current_target_index])
+                            self.sent_permission = False
+
                     else:
                         self.get_logger().info("No valid acknowledgment, retrying...")
                 else:
@@ -136,13 +175,13 @@ class PoseFollower(Node):
             self.get_logger().info("Waiting for current pose to be received...")
 
     def is_pose_reached(self, target_pose, current_pose):
-        margin_x = 0.25
-        margin_y = 0.25
+        margin_x = 0.30
+        margin_y = 0.30
         margin_w = 0.20
 
         return (
-            abs(current_pose.position.x - target_pose.pose.position.x)       <= margin_x and
-            abs(current_pose.position.y - target_pose.pose.position.y)       <= margin_y and
+            abs(current_pose.position.x    - target_pose.pose.position.x)    <= margin_x and
+            abs(current_pose.position.y    - target_pose.pose.position.y)    <= margin_y and
             abs(current_pose.orientation.w - target_pose.pose.orientation.w) <= margin_w
         )
 
