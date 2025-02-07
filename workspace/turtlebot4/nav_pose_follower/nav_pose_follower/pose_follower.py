@@ -109,13 +109,13 @@ class PoseFollower(Node):
                 f"Pose X: {self.current_pose.position.x:.2f}, Y: {self.current_pose.position.y:.2f}]"
             )
 
-            if self.is_pose_reached(self.target_poses[self.current_target_index], self.current_pose) or elapsed_time > 30:
+            if self.is_pose_reached(self.target_poses[self.current_target_index], self.current_pose) or elapsed_time > 90:
                 self.get_logger().info(f"Pose {self.current_target_index + 1} reached or timed out.")
 
                 if self.current_target_index < len(self.target_poses) - 1:
-                    X_coor = 0.01
-                    Y_coor = -0.08
-                    W_orien = 0.50
+                    X_coor  = 0.0
+                    Y_coor  = 0.0
+                    W_orien = 0.0
                     send_data(self.ser, X_coor, Y_coor, W_orien)
 
                     if receive_ack(self.ser):
@@ -136,13 +136,13 @@ class PoseFollower(Node):
             self.get_logger().info("Waiting for current pose to be received...")
 
     def is_pose_reached(self, target_pose, current_pose):
-        margin_x = 0.15 * abs(target_pose.pose.position.x)
-        margin_y = 0.15 * abs(target_pose.pose.position.y)
-        margin_w = 0.25 * abs(target_pose.pose.orientation.w)
+        margin_x = 0.15
+        margin_y = 0.15
+        margin_w = 0.25
 
         return (
-            abs(current_pose.position.x - target_pose.pose.position.x) <= margin_x and
-            abs(current_pose.position.y - target_pose.pose.position.y) <= margin_y and
+            abs(current_pose.position.x - target_pose.pose.position.x)       <= margin_x and
+            abs(current_pose.position.y - target_pose.pose.position.y)       <= margin_y and
             abs(current_pose.orientation.w - target_pose.pose.orientation.w) <= margin_w
         )
 
