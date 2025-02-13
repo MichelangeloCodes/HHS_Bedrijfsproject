@@ -40,10 +40,14 @@ class PoseFollower(Node):
 
         # Doelen instellen
         self.target_poses = [
-            self.create_pose(-4.0, -1.0, 1.0),
-            self.create_pose(-2.0, -2.0, 1.0),
-            self.create_pose(-6.0, 1.5, 0.5),
-            self.create_pose(-0.3, -0.15, 1.0)
+            #self.create_pose(-4.0, -1.0, 1.0),
+            #self.create_pose(-2.0, -2.0, 1.0),
+            #self.create_pose(-6.0, 1.5, 0.5),
+            #self.create_pose(-0.3, -0.15, 1.0)
+            self.create_pose(-3.0, -5.46, 1.0),
+            self.create_pose(-3.9, -1.86, 1.0),
+            self.create_pose(-7.44, -1.0, 1.0),
+            self.create_pose(-2.16, -1.74, 1.0)
         ]
         self.current_target_index = 0
 
