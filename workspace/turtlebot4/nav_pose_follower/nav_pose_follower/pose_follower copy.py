@@ -1,0 +1,306 @@
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import PoseStamped
+from nav2_msgs.action import NavigateToPose
+from rclpy.action import ActionClient
+from time import time
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from std_srvs.srv import Empty  # For docking service
+from irobot_create_msgs.action import Dock, Undock  # Import the Dock and Undock actions
+
+from .usb_arduino_connection import setup_serial, send_data, receive_ack
+
+from std_msgs.msg import String
+import csv
+from datetime import datetime
+from rclpy.qos import QoSProfile
+import serial
+
+# Instellen van de UART-poort (vervang '/dev/serial0' indien nodig)
+uart = serial.Serial('/dev/ttyAMA0', baudrate=115200, timeout=1)
+
+def get_valid_response(ping_id):
+    """
+    Functie om te controleren of een geldige respons ontvangen is.
+    """
+    try:
+        # Wacht op een antwoord
+        time.sleep(0.2)  # Geef tijd aan de M5Stack om te reageren
+        if uart.in_waiting > 0:
+            response = uart.readline().decode('utf-8').strip()
+            print(f"Received: {response}")
+
+            # Verwerk het ontvangen CSV-antwoord
+            parts = response.split(',')
+            if len(parts) == 5:
+                try:
+                    # Try to parse the response data
+                    received_id = int(parts[0])  # ID
+                    temperature = float(parts[1])  # Temperatuur
+                    humidity = float(parts[2])  # Luchtvochtigheid
+                    co2 = float(parts[3])
+                    light = float(parts[4])
+
+
+                    # Verkrijg huidige tijd
+                    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                    # Voeg de tijd toe aan de respons
+                    csv_line = [[received_id, temperature, humidity, co2, light, current_time]]
+
+                    print(f"Response - ID: {received_id}, Temperature: {temperature}, Humidity: {humidity}, CO2: {co2}, Light: {light}, Tijd van ontvangst: {current_time}")
+
+                    # Controleer of de ontvangen ID overeenkomt
+                    if str(received_id) == ping_id:
+                        print("Valid response received!")
+                        return True, csv_line
+                    else:
+                        print("Mismatched ID in response!")
+                except ValueError as e:
+                    print(f"Error parsing data: {e}. Skipping malformed response.")
+            else:
+                print(f"Malformed response: {response}")
+        else:
+            print("No response received.")
+    except Exception as e:
+        print(f"Error while receiving response: {e}")
+    return False, None
+
+
+class PoseFollower(Node):
+    def __init__(self):
+        super().__init__('pose_follower')
+
+        # setup connection to arduino - from usb_arduino_connection
+        self.ser = setup_serial()    
+
+        # Create an action client to send navigation goals
+        self._action_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
+
+        # Create action clients for docking and undocking
+        self.dock_action_client = ActionClient(self, Dock, '/dock')
+        self.undock_action_client = ActionClient(self, Undock, '/undock')
+
+        # Wait for the action servers to be available
+        self.get_logger().info("Waiting for the action servers to be available...")
+        self._action_client.wait_for_server()
+        self.dock_action_client.wait_for_server()
+        self.undock_action_client.wait_for_server()
+        self.get_logger().info("Action servers available!")
+
+        # Define target poses
+        self.target_poses = [
+            self.create_pose(-4.0, -1.0, 1.0),  # Pose 1
+            self.create_pose(-2.0, -2.0, 1.0),  # Pose 2
+            self.create_pose(-6.0, 1.5, 0.5),   # Pose 3
+            self.create_pose(-0.3, -0.15, 1.0)  # Pose 4
+        ]
+        self.current_target_index = 0  # Start with the first pose
+
+        # Variable to store the current pose
+        self.current_pose = None
+
+        # Variable to track the start time
+        self.start_time = time()
+
+        # Subscriber to the robot's pose
+        self.create_subscription(
+            PoseWithCovarianceStamped,
+            '/amcl_pose',  # Update with the correct topic
+            self.pose_callback,
+            10
+        )
+
+        # Start the navigation to the first target pose
+        self.move_to_pose(self.target_poses[self.current_target_index])
+
+        # Timer to periodically check the goal status and log the current pose
+        self.timer = self.create_timer(1.0, self.track_pose)  # 1 second interval
+
+        ####
+        # Subscriber to receive the number
+        self.subscriber = self.create_subscription(
+            String,
+            'number_received',  # Topic name where the number will be published
+            self.csv_callback,  # Callback function to handle the number
+            qos_profile=QoSProfile(depth=10)
+        )
+
+        # Publisher to send the CSV content
+        self.publisher_ = self.create_publisher(String, 'csv_sent', qos_profile=QoSProfile(depth=10))
+        ####
+    #####
+    def csv_callback(self, msg):
+        """Callback function to handle the incoming number."""
+        self.get_logger().info(f'Received number: {msg.data}')
+        self.create_csv("example.csv", msg.data)
+
+    def send_csv(self, file):
+        """Send the created CSV file."""
+        try:
+            # Create the CSV file with the current number
+            # self.create_csv("example.csv", str(self.current_number))
+            with open("example.csv", "r") as file:
+                csv_content = file.read()
+                msg = String()
+                msg.data = csv_content
+                self.publisher_.publish(msg)
+                self.get_logger().info("CSV file sent.")
+                self.current_number += 1  # Increment the number
+
+        except FileNotFoundError:
+            self.get_logger().error("CSV file not found!")
+    #####
+
+    def create_pose(self, x, y, w):
+        """Helper to create a PoseStamped object."""
+        pose = PoseStamped()
+        pose.header.frame_id = 'map'
+        pose.pose.position.x = x
+        pose.pose.position.y = y
+        pose.pose.orientation.w = w
+        return pose
+
+    def move_to_pose(self, target_pose):
+        goal_msg = NavigateToPose.Goal()
+        goal_msg.pose = target_pose
+
+        self.get_logger().info(f"Sending goal to move to pose: {target_pose.pose.position.x}, {target_pose.pose.position.y}")
+
+        # Send the goal and set up a callback for when the goal is done
+        future = self._action_client.send_goal_async(goal_msg)
+        future.add_done_callback(self.goal_response_callback)
+
+        # Reset the timer whenever a new goal is sent
+        self.start_time = time()
+
+    def goal_response_callback(self, future):
+        result = future.result()
+        if result:
+            self.get_logger().info("Goal accepted, waiting for result...")
+
+    def pose_callback(self, msg):
+        """Callback to update the current pose of the robot."""
+        self.current_pose = msg.pose.pose
+
+    def track_pose(self):
+        """Track time and log current location/pose."""
+        current_time = time()
+        elapsed_time = round(current_time - self.start_time, 2)  # Round to 2 decimal places
+
+        # Check if current_pose has been updated before proceeding
+        if self.current_pose is not None:
+            self.get_logger().info(
+                f"[INFO] [Time: {elapsed_time:.1f} s - Target location: {self.current_target_index + 1} - "
+                f"Pose X: {self.current_pose.position.x:.2f}, Y: {self.current_pose.position.y:.2f}]"
+            )
+
+            # Check if the pose is reached or if the timeout has occurred
+            if self.is_pose_reached(self.target_poses[self.current_target_index], self.current_pose) or elapsed_time > 30:  # 30-second timeout
+                self.get_logger().info(f"Pose {self.current_target_index + 1} reached or timed out after {elapsed_time} seconds.")
+
+                if self.current_target_index < len(self.target_poses) - 1:
+                    # Send data if not at last pose
+                    X_coor  = 0.01
+                    Y_coor  = -0.08
+                    W_orien = 0.50
+                    send_data(self.ser, X_coor, Y_coor, W_orien)
+
+                    if receive_ack(self.ser):
+                        # Valid acknowledgment received, 
+                        self.get_logger().info("Acknowledgment received, continuing to next pose...")
+
+                        # Run it here!!!
+                        def create_csv(self, filename, ping_id):
+                            """Create a CSV file with dummy sensor data."""
+
+                            try:
+                                while True:
+                                    # Maak een ping-bericht in CSV-formaat
+                                    ping_message = f"ping,{ping_id}"
+                                    uart.write((ping_message + '\n').encode('utf-8'))
+                                    print(f"Sent: {ping_message}")
+
+                                    pass_value, csv_line = get_valid_response(ping_id)
+                                    # Controleer of de respons geldig is
+                                    if pass_value:
+                                        data = csv_line
+                                        break  # Stop als er een geldige respons is ontvangen
+
+                                    print("Retrying with the same ID...")
+                                    time.sleep(0.2)  # Wacht voordat opnieuw verzenden
+
+                            except Exception as e:
+                                print(f"Error: {e}")
+
+                            # data = get_valid_response(ping_id)
+                            self.get_logger().info(f"Sensor data is'{data}'")
+
+                            with open(filename, mode="w", newline="") as file:
+                                writer = csv.writer(file)
+                                writer.writerows(data)
+
+                            self.get_logger().info(f"CSV file '{filename}' created with data: {data}")
+
+                            self.send_csv(file)
+
+
+                        # move to the next pose
+                        self.get_logger().info("Acknowledgment received, continuing to next pose...")
+                        self.current_target_index += 1
+                        self.move_to_pose(self.target_poses[self.current_target_index])
+                    else:
+                        self.get_logger().info("No valid acknowledgment, retrying...")
+
+                else:
+                    # At last pose, proceed to docking without sending data
+                    self.get_logger().info("Final pose reached. Initiating docking procedure...")
+                    self.dock_robot()  # Call docking procedure
+
+            else:
+                self.get_logger().info("Pose not reached yet, continuing to track...")
+        else:
+            self.get_logger().info("Waiting for current pose to be received...")
+
+    def is_pose_reached(self, target_pose, current_pose):
+        """Check if the current pose is within a margin of the target pose."""
+        margin_x = 0.15 * abs(target_pose.pose.position.x)  # 15% margin for x
+        margin_y = 0.15 * abs(target_pose.pose.position.y)  # 15% margin for y
+        margin_w = 0.25 * abs(target_pose.pose.orientation.w)  # 25% margin for w
+
+        # Check if X, Y, and W are within the specified margins
+        return (
+            abs(current_pose.position.x - target_pose.pose.position.x) <= margin_x and
+            abs(current_pose.position.y - target_pose.pose.position.y) <= margin_y and
+            abs(current_pose.orientation.w - target_pose.pose.orientation.w) <= margin_w
+        )
+
+    def dock_robot(self):
+        """Send a request to the docking service."""
+        self.get_logger().info("Docking the robot...")  
+        goal_msg = Dock.Goal()  # Send the Dock action goal
+        future = self.dock_action_client.send_goal_async(goal_msg)
+        future.add_done_callback(self.dock_response_callback)
+
+    def dock_response_callback(self, future):
+        """Handle the response from the docking service."""
+        try:
+            future.result()
+            self.get_logger().info("Docking request completed successfully.")
+        except Exception as e:
+            self.get_logger().error(f"Failed to dock the robot: {str(e)}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    pose_follower = PoseFollower()
+
+    rclpy.spin(pose_follower)
+
+    pose_follower.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
